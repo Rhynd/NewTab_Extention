@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "transform": {
+          "host": "suggestqueries.google.com",
+          "queryTransform": {
+            "addOrReplaceParams": [
+              { "key": "client", "value": "chrome" }
+            ]
+          }
+        }
+      }
+    },
+    "condition": {
+      "urlFilter": "||www.google.com/complete/search",
+      "resourceTypes": ["xmlhttprequest"]
+    }
+  }
+]

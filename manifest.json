@@ -9,9 +9,24 @@
   "permissions": [
     "history",
     "topSites",
-    "bookmarks"
+    "bookmarks",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
-    "https://suggestqueries.google.com/*"
-  ]
+    "https://www.google.com/*",
+    "https://suggestqueries.google.com/*",
+    "https://t2.gstatic.com/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "rules",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://suggestqueries.google.com https://www.google.com; img-src 'self' data: https://t2.gstatic.com"
+  }
 }
