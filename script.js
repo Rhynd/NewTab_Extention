@@ -14,7 +14,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State ---
     let abortController = new AbortController();
-    let blurTimeout = null; // Keep this for mousedown handlers
+    let blurTimeout = null;
+    let userFocusedInput = false;
+
+// Replace the searchInput focus listener (around line 43)
+    searchInput.addEventListener('focus', () => {
+        if (blurTimeout) clearTimeout(blurTimeout);
+        userFocusedInput = true;
+        const query = searchInput.value.trim();
+        if (query.length > 0) {
+            fetchSuggestions(query);
+        } else {
+            showInitialSuggestions();
+        }
+    });
+
+// Add a blur listener to reset the flag
+    searchInput.addEventListener('blur', () => {
+        userFocusedInput = false;
+    });
+
+// Update the window blur listener (around line 74)
+    window.addEventListener('blur', () => {
+        clearSuggestions();
+        userFocusedInput = false; // Reset flag when window loses focus
+    });
+
+// Add a window focus listener to prevent auto-showing suggestions
+    window.addEventListener('focus', () => {
+        // Don't show suggestions just because the window regained focus
+        if (document.activeElement === searchInput && !userFocusedInput) {
+            searchInput.blur(); // Remove focus
+        }
+    });
 
     // --- Debounce Function ---
     function debounce(func, delay) {
@@ -58,25 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // REMOVED: The 'blur' event listener is no longer needed here.
-    // The global click listener will handle closing the suggestions.
-
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && document.activeElement === searchInput) {
             clearSuggestions();
-            searchInput.blur(); // Remove focus from input
+            searchInput.blur();
         }
     });
 
-    // MODIFIED: Global mousedown listener to handle clicks outside the search area
     document.addEventListener('mousedown', (event) => {
-        if (!searchContainer.contains(event.target)) {
-            if (matchesList.style.display === 'block') {
-                clearSuggestions();
-            }
+        if (!searchContainer.contains(event.target) && matchesList.style.display === 'block') {
+            clearSuggestions();
         }
     });
 
+    window.addEventListener('blur', () => {
+        clearSuggestions();
+    });
 
     // --- Initial Page Load ---
     displayTopSites();
@@ -100,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="link-icon">
                             <img src="${faviconUrl}" alt="">
                         </div>
-                        <span>${site.title}</span>
+                        <span>${site.title || new URL(site.url).hostname}</span>
                     `;
                     quickLinksGrid.appendChild(linkItem);
                 });
@@ -109,8 +138,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function groupHistoryItems(historyItems) {
+        const uniqueHistoryItems = [];
+        const seenUrls = new Set();
+        for (const item of historyItems) {
+            if (item.url && !seenUrls.has(item.url)) {
+                uniqueHistoryItems.push(item);
+                seenUrls.add(item.url);
+            }
+        }
+
         const itemsByDomain = new Map();
-        historyItems.forEach(item => {
+        uniqueHistoryItems.forEach(item => {
             try {
                 const domain = new URL(item.url).hostname.replace(/^www\./, '');
                 if (!itemsByDomain.has(domain)) {
@@ -122,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const processedSuggestions = [];
         for (const [domain, items] of itemsByDomain.entries()) {
-            items.sort((a, b) => b.lastVisitTime - a.lastVisitTime); // Most recent first
+            items.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
 
             const mappedItems = items.map(item => ({
                 text: item.title || item.url,
@@ -133,9 +171,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
 
             if (items.length > 1) {
+                const simpleUrlItem = items.find(item => {
+                    try {
+                        const url = new URL(item.url);
+                        return url.pathname === '/' && url.search === '' && url.hash === '';
+                    } catch {
+                        return false;
+                    }
+                });
+
+                const groupUrl = simpleUrlItem ? simpleUrlItem.url : items[0].url;
+
                 processedSuggestions.push({
                     text: domain,
-                    url: `https://${domain}`,
+                    url: groupUrl,
                     type: 'history',
                     isGroup: true,
                     items: mappedItems,
@@ -146,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Sort groups by their most recent visit time
         return processedSuggestions.sort((a, b) => {
             const timeA = a.latestVisitTime || a.lastVisitTime || 0;
             const timeB = b.latestVisitTime || b.lastVisitTime || 0;
@@ -159,24 +207,30 @@ document.addEventListener('DOMContentLoaded', () => {
         abortController.abort();
         abortController = new AbortController();
 
-        chrome.history.search({ text: '', maxResults: 25 }, (historyItems) => {
+        chrome.history.search({ text: '', maxResults: 100 }, (historyItems) => {
             const filtered = historyItems.filter(item => item.url && item.title !== 'New Tab');
             const suggestions = groupHistoryItems(filtered);
             displaySuggestions(suggestions.slice(0, 10));
         });
     }
 
-    function performSearch(query, url) {
+    function performSearch(query, url, inNewTab = false) {
+        let targetUrl;
         if (url) {
-            window.location.href = url;
-            return;
+            targetUrl = url;
+        } else {
+            query = query.trim();
+            if (!query) return;
+            targetUrl = (query.includes('.') && !query.includes(' '))
+                ? (query.startsWith('http') ? query : `https://${query}`)
+                : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
         }
-        query = query.trim();
-        if (!query) return;
-        const navUrl = (query.includes('.') && !query.includes(' '))
-            ? (query.startsWith('http') ? query : `https://${query}`)
-            : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-        window.location.href = navUrl;
+
+        if (inNewTab) {
+            chrome.tabs.create({ url: targetUrl, active: false });
+        } else {
+            window.location.href = targetUrl;
+        }
     }
 
     async function fetchSuggestions(query) {
@@ -186,9 +240,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fetchGoogleSuggestions = async () => {
             try {
-                const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`, { signal });
+                const response = await fetch(`https://www.google.com/complete/search?client=search-alias&q=${encodeURIComponent(query)}`, { signal });
                 const data = await response.json();
-                return data[1].map(text => ({ text, type: 'search' }));
+                return data[1].map(item => ({ text: item[0].replace(/<[^>]+>/g, ''), type: 'search' }));
             } catch (error) {
                 if (error.name === 'AbortError') return [];
                 console.error('Error fetching Google suggestions:', error);
@@ -199,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fetchHistorySuggestions = async () => {
             if (typeof chrome.history === 'undefined') return [];
             return new Promise(resolve => {
-                chrome.history.search({ text: query, maxResults: 10 }, (items) => {
+                chrome.history.search({ text: query, maxResults: 50 }, (items) => {
                     const suggestions = groupHistoryItems(items);
                     resolve(suggestions);
                 });
@@ -233,20 +287,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 matchesList.appendChild(item);
 
                 if (suggestion.isGroup) {
-                    const subList = document.createElement('div');
-                    subList.className = 'suggestion-sublist';
+                    const sublist = document.createElement('div');
+                    sublist.className = 'suggestion-sublist';
                     suggestion.items.forEach(subItemData => {
                         const subItem = createSuggestionItem(subItemData);
-                        subList.appendChild(subItem);
+                        sublist.appendChild(subItem);
                     });
-                    item.appendChild(subList);
+                    item.appendChild(sublist);
 
                     const arrow = item.querySelector('.suggestion-arrow');
                     if (arrow) {
                         arrow.addEventListener('mousedown', (e) => {
-                            e.preventDefault(); // Prevent input from losing focus
+                            e.preventDefault();
                             e.stopPropagation();
-                            item.classList.toggle('expanded');
+                            const isCurrentlyExpanded = item.classList.contains('expanded');
+
+                            document.querySelectorAll('.suggestion-item.expanded').forEach(otherItem => {
+                                if (otherItem !== item) {
+                                    otherItem.classList.remove('expanded');
+                                }
+                            });
+
+                            if (!isCurrentlyExpanded) {
+                                item.classList.add('expanded');
+                            } else {
+                                item.classList.remove('expanded');
+                            }
                         });
                     }
                 }
@@ -287,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rightContainer.appendChild(arrow);
         }
 
-        if (suggestion.type === 'history') {
+        if (suggestion.type === 'history' && !suggestion.isGroup) {
             const deleteButton = document.createElement('button');
             deleteButton.className = 'suggestion-delete-button';
             deleteButton.title = `Remove this history item`;
@@ -300,9 +366,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         item.addEventListener('mousedown', (e) => {
-            if (!e.target.closest('.suggestion-delete-button, .suggestion-arrow')) {
-                performSearch(suggestion.text, suggestion.url);
+            if (e.target.closest('.suggestion-delete-button, .suggestion-arrow')) {
+                return;
             }
+            e.preventDefault();
+            e.stopPropagation();
+            const openInNewTab = e.button === 1 || e.ctrlKey || e.metaKey;
+            performSearch(suggestion.text, suggestion.url, openInNewTab);
         });
 
         return item;

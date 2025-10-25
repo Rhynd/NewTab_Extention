@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Rhynd's custom new tab page",
   "version": "1.0",
-  "description": "My own custom new tab, with Chrome's Citron theme colours and a custom background from Star Citizen",
+  "description": "My own custom new tab, with Chrome's Citron theme colours and a custom background from shot in Star Citizen",
   "chrome_url_overrides": {
     "newtab": "new_tab.html"
   },
