@@ -1,13 +1,3 @@
-/**
- * script.js
- *
- * Handles all client-side logic for the custom new tab page.
- * This includes:
- * - Fetching and displaying top sites.
- * - Handling search input and fetching suggestions from Google and browser history.
- * - Displaying, grouping, and managing search suggestions.
- * - Navigating to URLs or performing searches.
- */
 document.addEventListener('DOMContentLoaded', () => {
     // --- Element References ---
     // Caching DOM elements for performance.
@@ -27,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- State ---
     let abortController = new AbortController(); // To cancel in-flight fetch requests.
     let userFocusedInput = false; // Tracks if the user has intentionally focused the input.
+    const expandedGroups = new Set(); // Remember which groups are expanded across refreshes.
 
     // --- Debounce Function ---
     /**
@@ -326,16 +317,29 @@ document.addEventListener('DOMContentLoaded', () => {
             searchForm.classList.add('suggestions-active');
             matchesList.style.display = 'block';
 
+            // Track which groups are present so we can prune stale expanded keys.
+            const presentGroups = new Set();
+
             suggestions.forEach(suggestion => {
                 const item = createSuggestionItem(suggestion);
-                matchesList.appendChild(item);
 
                 // If the suggestion is a group, create and append its sublist.
                 if (suggestion.isGroup) {
+                    const groupKey = suggestion.url || suggestion.text;
+                    presentGroups.add(groupKey);
+                    item.dataset.groupKey = groupKey;
+
+                    // Restore expansion if previously expanded.
+                    if (expandedGroups.has(groupKey)) {
+                        item.classList.add('expanded');
+                    }
+
                     const sublist = document.createElement('div');
                     sublist.className = 'suggestion-sublist';
                     suggestion.items.forEach(subItemData => {
                         const subItem = createSuggestionItem(subItemData);
+                        // Mark subitems with the parent group key so they keep context on refresh/delete.
+                        subItem.dataset.groupKey = groupKey;
                         sublist.appendChild(subItem);
                     });
                     item.appendChild(sublist);
@@ -351,20 +355,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Collapse other expanded groups.
                             document.querySelectorAll('.suggestion-item.expanded').forEach(otherItem => {
                                 if (otherItem !== item) {
+                                    const otherKey = otherItem.dataset.groupKey;
                                     otherItem.classList.remove('expanded');
+                                    if (otherKey) expandedGroups.delete(otherKey);
                                 }
                             });
 
-                            // Toggle the current group.
+                            // Toggle the current group and update expandedGroups accordingly.
                             if (!isCurrentlyExpanded) {
                                 item.classList.add('expanded');
+                                expandedGroups.add(groupKey);
                             } else {
                                 item.classList.remove('expanded');
+                                expandedGroups.delete(groupKey);
                             }
                         });
                     }
                 }
+
+                matchesList.appendChild(item);
             });
+
+            // Remove any expanded keys that are no longer present (e.g., group emptied/deleted).
+            for (const key of Array.from(expandedGroups)) {
+                if (!presentGroups.has(key)) {
+                    expandedGroups.delete(key);
+                }
+            }
         } else {
             clearSuggestions();
         }
