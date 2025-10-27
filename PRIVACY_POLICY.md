@@ -1,6 +1,6 @@
 # Privacy Policy for Rhynd's Custom New Tab Page
 
-**Last Updated:** `25/10/2025`
+**Last Updated:** `27/10/2025`
 
 Thank you for using Rhynd's Custom New Tab Page. This privacy policy explains what information the extension accesses and how it is used. Your privacy is important to us, and this extension is designed to be as transparent as possible.
 
@@ -21,12 +21,12 @@ To provide its features, the extension needs permission to access certain data s
     *   **Usage:** The extension reads your top sites and displays them.
 
 3.  **Bookmarks (`bookmarks` permission)**:
-    *   **Why?** This permission is requested to allow for potential future features involving bookmarks.
-    *   **Usage:** As of the current version, this permission **is not actively used**. No bookmark data is read or modified.
+    *   **Why?** To provide relevant suggestions from your saved bookmarks as you type in the search bar.
+    *   **Usage:** Your bookmarks are queried locally to be included in the search suggestions. The extension only reads bookmark data; it does not modify or delete your bookmarks.
 
 4.  **Network Request Modification (`declarativeNetRequest` permission)**:
-    *   **Why?** This permission is used to modify network requests before they are sent. It is included to ensure compatibility and proper functioning with Google services.
-    *   **Usage:** The extension uses this permission to apply rules that help manage requests to Google's services securely and efficiently, without reading the content of your network traffic.
+    *   **Why?** To ensure that search suggestions from Google are fetched correctly and securely.
+    *   **Usage:** The extension uses this permission to apply a rule that modifies the Google suggestion service URL. This is a secure method that does not involve reading or intercepting the content of your network traffic.
 
 
 ## Information Transmitted to Third Parties

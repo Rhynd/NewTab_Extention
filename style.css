@@ -1,11 +1,25 @@
+/* --- CSS Variables (Theme) --- */
+:root {
+    --bg-color: #202124;
+    --text-color: #dddcd8;
+    --text-color-light: #e9e2d4;
+    --primary-accent: #dec663;
+    --secondary-accent: #6d6448;
+    --surface-color: #2c250c;
+    --hover-color: #423b20;
+    --sub-hover-color: #4a4125;
+    --icon-secondary-color: #a09c93;
+    --surface-secondary-color: #3c4043;
+}
+
 /* --- Reset and Basic Styles --- */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #202124;
+    background-color: var(--bg-color);
     background-image: url("/src/SC_BG.png");
     background-size: cover;
     background-position: center;
-    color: #dddcd8;
+    color: var(--text-color);
     margin: 0;
     padding: 0;
     display: flex;
@@ -41,16 +55,16 @@ body {
     position: relative; /* For the suggestions dropdown positioning */
     display: flex;
     align-items: center;
-    background-color: #2c250c;
+    background-color: var(--surface-color);
     border-radius: 18px;
-    border: 3px solid #6d6448;
+    border: 3px solid var(--secondary-accent);
     height: 50px;
-    color: #dddcd8;
+    color: var(--text-color);
 }
 
 #search-form:hover,
 #search-form:focus-within {
-    border-color: #dec663; /* Highlight on hover or focus */
+    border-color: var(--primary-accent); /* Highlight on hover or focus */
 }
 
 /* Style for when suggestions are visible: flattens bottom corners */
@@ -63,7 +77,7 @@ body {
 .search-icon {
     position: absolute;
     left: 16px;
-    fill: #e9e2d4;
+    fill: var(--text-color-light);
 }
 
 /* --- Search Input Field --- */
@@ -74,13 +88,13 @@ body {
     background: transparent;
     border-radius: 24px;
     font-size: 16px;
-    color: #dddcd8;
+    color: var(--text-color);
     padding-left: 52px; /* Space for the search icon */
     padding-right: 20px;
 }
 
 #search-input::placeholder {
-    color: #e9e2d4;
+    color: var(--text-color-light);
     opacity: 1;
 }
 
@@ -113,21 +127,21 @@ body {
     flex-shrink: 0; /* Prevent the button from shrinking */
     width: 50px;
     height: 50px;
-    background-color: #2c250c;
-    border: 3px solid #6d6448;
+    background-color: var(--surface-color);
+    border: 3px solid var(--secondary-accent);
     border-radius: 18px;
     cursor: pointer;
     transition: border-color 0.2s;
 }
 
 .gemini-bubble:hover {
-    border-color: #dec663;
+    border-color: var(--primary-accent);
 }
 
 .gemini-icon {
     width: 24px;
     height: 24px;
-    fill: #e9e2d4;
+    fill: var(--text-color-light);
 }
 
 /* --- Suggestions Dropdown List --- */
@@ -136,8 +150,8 @@ body {
     top: calc(100% - 3px); /* Position directly below the search bar, overlapping the border */
     left: 0;
     right: 0;
-    background-color: #2c250c;
-    border: 3px solid #dec663;
+    background-color: var(--surface-color);
+    border: 3px solid var(--primary-accent);
     border-top: none;
     border-radius: 0 0 20px 20px;
     padding-top: 4px;
@@ -146,7 +160,6 @@ body {
     overflow-y: auto; /* Enable vertical scrolling */
     text-align: left;
     z-index: 5;
-    display: none; /* Hidden by default */
 }
 
 /* Hide the scrollbar for a cleaner look */
@@ -168,14 +181,18 @@ body {
     gap: 12px;
     padding: 6px 12px 6px 20px;
     font-size: 16px;
-    color: #dddcd8;
+    color: var(--text-color);
     cursor: pointer;
     border-radius: 9px;
     margin: 0 8px;
 }
 
 .suggestion-item:hover {
-    background-color: #423b20;
+    background-color: var(--hover-color);
+}
+
+.suggestion-item.selected {
+    background-color: var(--hover-color);
 }
 
 .suggestion-content {
@@ -200,7 +217,7 @@ body {
 .suggestion-item .icon {
     width: 24px;
     height: 24px;
-    fill: #e9e2d4;
+    fill: var(--text-color-light);
 }
 
 .suggestion-item .favicon {
@@ -222,7 +239,7 @@ body {
 .suggestion-arrow {
     width: 28px;
     height: 28px;
-    fill: #a09c93;
+    fill: var(--icon-secondary-color);
     transition: transform 0.2s ease-in-out, background-color 0.2s;
     border-radius: 50%;
     display: flex;
@@ -269,7 +286,7 @@ body {
     box-sizing: border-box;
 }
 .suggestion-sublist .suggestion-item:hover {
-    background-color: #4a4125;
+    background-color: var(--sub-hover-color);
 }
 
 /* --- Delete Button for History Items --- */
@@ -306,14 +323,14 @@ body {
 }
 
 .suggestion-sublist::-webkit-scrollbar-thumb {
-    background-color: #6d6448;
+    background-color: var(--secondary-accent);
     border-radius: 4px;
     border: 2px solid transparent;
     background-clip: content-box;
 }
 
 .suggestion-sublist::-webkit-scrollbar-thumb:hover {
-    background-color: #dec663;
+    background-color: var(--primary-accent);
 }
 
 /* --- Quick Links Grid --- */
@@ -334,18 +351,18 @@ body {
     padding: 8px;
     border-radius: 8px;
     text-decoration: none;
-    color: #dddcd8;
+    color: var(--text-color);
     transition: background-color 0.2s;
 }
 
 .link-item:hover {
-    background-color: #303134;
+    background-color: var(--hover-color);
 }
 
 .link-icon {
     width: 48px;
     height: 48px;
-    background-color: #3c4043;
+    background-color: var(--surface-secondary-color);
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -365,4 +382,14 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     width: 80px;
+}
+
+
+/* In style.css */
+.search-container #matches-list {
+    display: none; /* Hidden by default */
+}
+
+.search-container.has-suggestions #matches-list {
+    display: block; /* Shown when the class is present */
 }
