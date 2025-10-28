@@ -54,7 +54,7 @@ The new tab page is designed to be fully navigable with your keyboard.
 
 ## Availability
 
-The extension will be added to the Microsoft Edge Add-ons store soon. (hopefully)
+The extension is avaible on the [edge add-ons store](https://microsoftedge.microsoft.com/addons/detail/rhynds-custom-new-tab-pa/iapagninkmhggolbkonhbjpdhmhoennj)
 
 ## Installation (Manual)
 
